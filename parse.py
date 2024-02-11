@@ -13,6 +13,7 @@ import sys
 import os
 from enum import Enum
 from enum import auto as enum_auto
+import pdb
 
 # filename of this file (without path)
 FILE = os.path.basename(__file__)
@@ -78,6 +79,7 @@ def check_args() -> None:
     if len(sys.argv) == 2:
         print(USAGE)
         print(HELP)
+        sys.exit(0)
 
 
 def load_stdin() -> str:
@@ -87,11 +89,38 @@ def load_stdin() -> str:
     while True:
         try:
             content += input()
+            content += "\n"
         except EOFError:
             break
 
     return content
 
+
+def preprocess(pgr: str) -> str:
+    """strips comments and blank lines"""
+
+    # remove blank lines
+    lines = pgr.splitlines()
+    no_blank_lines = [line + "\n" for line in lines if not line.isspace()]
+
+    # finite state machine state: 0 - init, 1 - comment
+    state = 0
+
+    output = ""
+
+    # finite state machine
+    for letter in no_blank_lines:
+        if state == 0:
+            if letter == "#":
+                state = 1
+            else:
+                output += letter
+        else:
+            if letter == "\n":
+                output += "\n"
+                state = 0
+
+    return output
 
 
 def main():
@@ -100,8 +129,9 @@ def main():
     # whole program from the input
     pgr_in = load_stdin()
 
-    pass
+    processed = preprocess(pgr_in)
 
+    print(processed)
 
 if __name__ == "__main__":
     main()

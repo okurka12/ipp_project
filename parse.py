@@ -99,17 +99,13 @@ def load_stdin() -> str:
 def preprocess(pgr: str) -> str:
     """strips comments and blank lines"""
 
-    # remove blank lines
-    lines = pgr.splitlines()
-    no_blank_lines = [line + "\n" for line in lines if not line.isspace()]
-
     # finite state machine state: 0 - init, 1 - comment
     state = 0
 
     output = ""
 
     # finite state machine
-    for letter in no_blank_lines:
+    for letter in pgr:
         if state == 0:
             if letter == "#":
                 state = 1
@@ -120,7 +116,14 @@ def preprocess(pgr: str) -> str:
                 output += "\n"
                 state = 0
 
-    return output
+    # remove blank lines
+    lines = output.splitlines()
+    no_blank_lines = [
+        line for line in lines if not line.isspace() and len(line) > 0
+    ]
+    no_blank_lines = "\n".join(no_blank_lines)
+
+    return no_blank_lines
 
 
 def main():

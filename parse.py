@@ -10,8 +10,12 @@
 ##  2024-02-11  ##
 ##################
 import sys
+import os
 
 USAGE = "USAGE: parse.py [--help]"
+
+# error codes
+ERR_WRONG_ARG = 10
 
 
 def perr(*args, **kwargs) -> None:
@@ -35,10 +39,16 @@ def check_args() -> None:
     if len(sys.argv) > 2:
         perr("Too many arguments...")
         perr_usage()
+        sys.exit(ERR_WRONG_ARG)
 
     if len(sys.argv) == 2 and sys.argv[1] != "--help":
         perr(f"invalid argument: '{sys.argv[1]}'")
         perr_usage()
+        sys.exit(ERR_WRONG_ARG)
+
+    # sys.argv[1] is "--help"
+    if len(sys.argv) == 2:
+        print(USAGE)
 
 
 

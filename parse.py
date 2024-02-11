@@ -11,6 +11,8 @@
 ##################
 import sys
 import os
+from enum import Enum
+from enum import auto as enum_auto
 
 # filename of this file (without path)
 FILE = os.path.basename(__file__)
@@ -30,6 +32,17 @@ ERROR RETURN CODES:
 
 # error codes
 ERR_WRONG_ARG = 10
+
+
+class Element:
+    """A class for an element (an XML tag)"""
+
+    def __init__(self, type: str) -> None:
+        self.type = type
+        self.attr = []
+        self.children = []
+        self.content = ""
+
 
 
 def perr(*args, **kwargs) -> None:
@@ -67,8 +80,25 @@ def check_args() -> None:
         print(HELP)
 
 
+def load_stdin() -> str:
+    """loads the whole standard input"""
+    content = ""
+
+    while True:
+        try:
+            content += input()
+        except EOFError:
+            break
+
+    return content
+
+
+
 def main():
     check_args()
+
+    # whole program from the input
+    pgr_in = load_stdin()
 
     pass
 

@@ -12,7 +12,21 @@
 import sys
 import os
 
-USAGE = f"USAGE: {os.path.basename(__file__)} [--help]"
+# filename of this file (without path)
+FILE = os.path.basename(__file__)
+
+USAGE = f"USAGE: {FILE} [--help]"
+
+HELP = f"""
+{FILE} reads IPPcode24 code from stdin and writes its
+XML representation to stdout
+
+ERROR RETURN CODES:
+  10 - invalid argument or arguments, invalid combination of arguments
+  21 - missing IPPcode24 header
+  22 - unknown opcode
+  23 - other lexical or syntactical error
+"""
 
 # error codes
 ERR_WRONG_ARG = 10
@@ -36,6 +50,7 @@ def check_args() -> None:
     checks arguments, if there is `--help`, prints help and exits,
     if there are more, prints error and exits
     """
+
     if len(sys.argv) > 2:
         perr("Too many arguments...")
         perr_usage()
@@ -49,8 +64,7 @@ def check_args() -> None:
     # sys.argv[1] is "--help"
     if len(sys.argv) == 2:
         print(USAGE)
-
-
+        print(HELP)
 
 
 def main():

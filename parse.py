@@ -12,7 +12,7 @@
 import sys
 import os
 
-USAGE = "USAGE: parse.py [--help]"
+USAGE = f"USAGE: {os.path.basename(__file__)} [--help]"
 
 # error codes
 ERR_WRONG_ARG = 10

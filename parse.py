@@ -33,7 +33,72 @@ ERROR RETURN CODES:
 
 # error codes
 ERR_WRONG_ARG = 10
+ERR_MISSING_HEADER = 21
+ERR_INVALID_OPCODE = 22
 
+SIGNATURES = {
+    "MOVE": ["var", "symb"],
+    "CREATEFRAME": [],
+    "PUSHFRAME": [],
+    "POPFRAME": [],
+    "DEFVAR": ["var"],
+    "CALL": ["label"],
+    "RETURN": [],
+    "PUSHS": ["symb"],
+    "POPS": ["var"],
+    "ADD": ["var", "symb", "symb"],
+    "SUB": ["var", "symb", "symb"],
+    "MUL": ["var", "symb", "symb"],
+    "IDIV": ["var", "symb", "symb"],
+    "LT": ["var", "symb", "symb"],
+    "GT": ["var", "symb", "symb"],
+    "EQ": ["var", "symb", "symb"],
+    "AND": ["var", "symb", "symb"],
+    "OR": ["var", "symb", "symb"],
+    "NOT": ["var", "symb", "symb"],
+    "INT2CHAR": ["var", "symb"],
+    "STR2INT": ["var", "symb", "symb"],
+    "READ": ["var", "type"],
+    "WRITE": ["symb"],
+    "CONCAT": ["var", "symb", "symb"],
+    "STRLEN": ["var", "symb"],
+    "GETCHAR": ["var", "symb", "symb"],
+    "SETCHAR": ["var", "symb", "symb"],
+    "TYPE": ["var", "symb"],
+    "LABEL": ["label"],
+    "JUMP": ["label"],
+    "JUMPIFEQ": ["label", "symb", "symb"],
+    "JUMPIFNEQ": ["label", "symb", "symb"],
+    "EXIT": ["symb"],
+    "DPRINT": ["symb"],
+    "BREAK": []
+}
+
+
+# class OpType(Enum):
+#     """operand type"""
+
+#     VAR = enum_auto()
+#     SYMB = enum_auto()
+#     LABEL = enum_auto()
+#     TYPE = enum_auto()
+
+
+class Operand:
+    def __init__(self, operand_type: str, value: str) -> None:
+        self.type = operand_type
+        self.value = value
+
+
+
+
+
+# IPPcode24 instructions
+class Instruction:
+    def __init__(self, opcode: str, *operands) -> None:
+        if opcode.upper() not in SIGNATURES:
+            perr(f"Invalid opcode: '{opcode}'")
+            sys.exit()
 
 class Element:
     """A class for an element (an XML tag)"""
@@ -96,6 +161,12 @@ def load_stdin() -> str:
     return content
 
 
+def parse_input(pgr: str) -> list[Instruction]:
+    """parses the program to return a list of instructions"""
+    instructions = []
+
+
+
 def preprocess(pgr: str) -> str:
     """strips comments and blank lines"""
 
@@ -126,6 +197,15 @@ def preprocess(pgr: str) -> str:
     return no_blank_lines
 
 
+def header_present(pgr: str) -> bool:
+    """returns if .IPPcode24 is present in the first line"""
+    first_line = pgr.splitlines()[0]
+    first_line = first_line.strip()
+    first_line = first_line.upper()
+    return ".IPPCODE24" == first_line
+
+
+
 def main():
     check_args()
 
@@ -134,7 +214,12 @@ def main():
 
     processed = preprocess(pgr_in)
 
-    print(processed)
+    if not header_present(processed):
+        perr("Missing header .IPPcode24")
+        sys.exit(ERR_MISSING_HEADER)
+
+    # print(processed)
+    print("parse.py: all ok", file=sys.stderr)
 
 if __name__ == "__main__":
     main()

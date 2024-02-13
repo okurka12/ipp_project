@@ -97,11 +97,31 @@ SIGNATURES = {
 
 class Operand:
     def __init__(self, operand_type: str, value: str) -> None:
+        """
+        `operand_type` - int, bool, string, nil, label, type, var
+        `value` - text, literal, frame@identifier
+        """
         self.type = operand_type
         self.value = value
 
     def __repr__(self) -> str:
         return f"{self.value} ({self.type})"
+
+    def is_constant(self) -> bool:
+        return self.type in ["int", "bool", "string", "nil"]
+
+    def is_symb(self) -> bool:
+        """symb - constant or a variable"""
+        return self.is_constant() or self.type == "var"
+
+    def is_label(self) -> bool:
+        return self.type == "label"
+
+    def is_var(self) -> bool:
+        return self.type == "var"
+
+    def is_type(self) -> bool:
+        return self.type == "type"
 
 
 # IPPcode24 instructions
@@ -293,11 +313,23 @@ def process_operand(op: str) -> Operand:
         return Operand(prefix.lower(), val)
 
 
+def do_match(expected: str, op: Operand) -> bool:
+    """
+    returns if `op` matches the expected type
+    `expected` (var, symb, label, type)
+    """
+    assert expected in ["var", "symb", "label", "type"]
+    return (expected == "var" and op.is_var()) or \
+           (expected == "symb" and op.is_symb()) or \
+           (expected == "label" and op.is_label()) or \
+           (expected == "type" and op.is_type())
+
+
 def process_line(line:str, instructions: list[Instruction]) -> None:
     """processes line and adds instruction object to `instructions`"""
     tokens = line.split()
 
-    opcode = tokens.pop(0)
+    opcode = tokens.pop(0).upper()
     log(DEBUG, f"opcode {opcode}")
 
     if opcode not in SIGNATURES:
@@ -312,9 +344,18 @@ def process_line(line:str, instructions: list[Instruction]) -> None:
         perr(f"    {line}")
         sys.exit(ERR_OTHER_LEXSYN)
 
-    operands = []
-    for op in tokens:
-        operands.append(process_operand(op))
+    operands: list[Operand] = []
+    for i, op_str in enumerate(tokens):
+        op_obj = process_operand(op_str)
+
+        # todo: check if this check is appropriate
+        expected_type = SIGNATURES[opcode][i]
+        if not do_match(expected_type, op_obj):
+            perr(f"invalit argument: {op_str}")
+            perr(f"    {line}")
+            sys.exit(ERR_OTHER_LEXSYN)
+
+        operands.append(op_obj)
 
     instructions.append(Instruction(opcode, operands))
 

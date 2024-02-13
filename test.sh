@@ -35,6 +35,7 @@ test_val $? $ERR_MISSING_HEADER "blank line"
 echo -n "" | ./run.sh > /dev/null 2> /dev/null
 test_val $? $ERR_MISSING_HEADER "nothing at all"
 
+test_file example.txt $OK
 test_file test_01.txt $OK
 test_file test_02.txt $OK
 test_file test_03.txt $OK

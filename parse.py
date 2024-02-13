@@ -166,8 +166,6 @@ class Element:
         print(self.closing())
 
 
-
-
 def perr(*args, **kwargs) -> None:
     """print to stderr, use like `print`"""
     if "file" in kwargs:
@@ -288,7 +286,7 @@ def process_operand(op: str) -> Operand:
 
     # var
     if prefix.upper() in ["GF", "LF", "TF"]:
-        return Operand("var", val)
+        return Operand("var", f"{prefix.upper()}@{val}")
 
     # int, bool, string, nil,
     elif prefix.lower() in ["int", "bool", "string", "nil"]:

@@ -26,3 +26,5 @@ with open(FILENAME, "r", encoding="utf-8") as f:
 
 with open(FILENAME, "w", encoding="utf-8") as f:
     f.write("".join(lines))
+
+print(f"changed 'edited' date of {FILENAME}")

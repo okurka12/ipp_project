@@ -1,0 +1,4 @@
+# expected: syntax error (23)
+.ippcode24
+label a
+write a  # invalid: write expexts SYMB (type|frame)@identifier

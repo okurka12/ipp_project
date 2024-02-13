@@ -1,0 +1,5 @@
+# invalid: it should be `defvar GF@a` (i didnt even realize it myself lol)
+# expected: syntax error (23)
+.ippcode24
+defvar a
+move a bool@tRuE

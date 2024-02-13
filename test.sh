@@ -1,5 +1,8 @@
+#!/bin/bash
 
 ERR_MISSING_HEADER=21
+ERR_INVALID_INSTRUCTION=22
+ERR_OTHER_LEX_SYN=23
 OK=0
 
 RED='\033[0;31m'
@@ -39,5 +42,8 @@ test_file example.txt $OK
 test_file test_01.txt $OK
 test_file test_02.txt $OK
 test_file test_03.txt $OK
+test_file test_04.txt $ERR_INVALID_INSTRUCTION
+test_file test_05.txt $ERR_OTHER_LEX_SYN
+test_file test_06.txt $ERR_OTHER_LEX_SYN
 
 echo "all tests done (passed $PASSED_TESTS/$TEST_COUNT)"

@@ -305,12 +305,16 @@ def process_operand(op: str) -> Operand:
     val = "@".join(val)
 
     # var
-    if prefix.upper() in ["GF", "LF", "TF"]:
+    if prefix in ["GF", "LF", "TF"]:
         return Operand("var", f"{prefix.upper()}@{val}")
 
     # int, bool, string, nil,
-    elif prefix.lower() in ["int", "bool", "string", "nil"]:
+    elif prefix in ["int", "bool", "string", "nil"]:
         return Operand(prefix.lower(), val)
+
+    else:
+        perr(f"invalid operand: {op}")
+        sys.exit(ERR_OTHER_LEXSYN)
 
 
 def do_match(expected: str, op: Operand) -> bool:

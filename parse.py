@@ -199,6 +199,10 @@ def preprocess(pgr: str) -> str:
 
 def header_present(pgr: str) -> bool:
     """returns if .IPPcode24 is present in the first line"""
+
+    if len(pgr.splitlines()) == 0:
+        sys.exit(ERR_MISSING_HEADER)
+
     first_line = pgr.splitlines()[0]
     first_line = first_line.strip()
     first_line = first_line.upper()

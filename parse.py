@@ -169,8 +169,8 @@ class Element:
         """returns element's opening tag"""
         attr_str = ""
         for key, value in self.attr.items():
-            attr_str += f"{key}=\"{value}\", "
-        attr_str = attr_str.rstrip(", ")
+            attr_str += f"{key}=\"{value}\" "
+        attr_str = attr_str.rstrip(" ")
         return f"<{self.type} {attr_str}>"
 
     def closing(self) -> str:
@@ -371,7 +371,7 @@ def generate_element_tree(instructions: list[Instruction]) -> Element:
 
         # instruction element
         inst_el = Element("instruction")
-        inst_el.add_attribute("order", str(i))
+        inst_el.add_attribute("order", str(i + 1))
         inst_el.add_attribute("opcode", inst.opcode.upper())
 
         for j, op in enumerate(inst.op_iter()):
@@ -411,6 +411,9 @@ def main():
 
     # construct element tree from the list of instructions
     prg_el = generate_element_tree(instructions)
+
+    # print xml header
+    print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
 
     # print xml representation of the element tree
     prg_el.print_xml()

@@ -118,15 +118,53 @@ class Instruction:
 
         return f"{self.opcode} {operands}"
 
+    # def op_iter(self) -> Operand:
+    def op_iter(self):
+        """iterator for instruction's operands/arguments (class Operand)"""
+        for op in self.operands:
+            yield op
+
 
 class Element:
     """A class for an element (an XML tag)"""
 
     def __init__(self, type: str) -> None:
         self.type = type
-        self.attr = []
+        self.attr = {}
         self.children = []
         self.content = ""
+
+    def add_children(self, children: list) -> None:
+        """add children in bulk (`childrem` is a list of elements)"""
+        self.children.extend(children)
+
+    def add_attribute(self, key: str, value: str) -> None:
+        """adds one attribute `key` with a value `value`"""
+        self.attr[key] = value
+
+    def set_content(self, content) -> None:
+        self.content = content
+
+    def opening(self) -> str:
+        """returns element's opening tag"""
+        attr_str = ""
+        for key, value in self.attr.items():
+            attr_str += f"{key}=\"{value}\", "
+        attr_str = attr_str.rstrip(", ")
+        return f"<{self.type} {attr_str}>"
+
+    def closing(self) -> str:
+        return f"</{self.type}>"
+
+    def print_xml(self) -> None:
+        """prints XML representation (including children) recursively"""
+        print(self.opening())
+        for child in self.children:
+            child.print_xml()
+        if len(self.content) > 0:
+            print(self.content)
+        print(self.closing())
+
 
 
 
@@ -283,26 +321,60 @@ def process_line(line:str, instructions: list[Instruction]) -> None:
     instructions.append(Instruction(opcode, operands))
 
 
+def generate_element_tree(instructions: list[Instruction]) -> Element:
+    prg_el = Element("program")
+    prg_el.add_attribute("language", "IPPcode24")
+    for i, inst in enumerate(instructions):
+
+        # instruction element
+        inst_el = Element("instruction")
+        inst_el.add_attribute("order", str(i))
+        inst_el.add_attribute("opcode", inst.opcode.upper())
+
+        for j, op in enumerate(inst.op_iter()):
+            op_el = Element(f"arg{j + 1}")
+            op_el.add_attribute("type", op.type)
+            op_el.set_content(op.value)
+            inst_el.add_children([op_el])
+
+        prg_el.add_children([inst_el])
+
+
+    return prg_el
+
+
 def main():
     check_args()
 
     # whole program from the input
     pgr_in = load_stdin()
 
+    # remove comments + blank lines
     processed = preprocess(pgr_in)
 
+    # check for header (.IPPcode24)
     if not header_present(processed):
         perr("Missing header .IPPcode24")
         sys.exit(ERR_MISSING_HEADER)
 
+    # parse code line by line to get a list of instruction objects
     instructions = []
     for line in processed.splitlines()[1:]:
         process_line(line, instructions)
 
+    # log processed instructions for debugging purposes
     for instruction in instructions:
         log(DEBUG, instruction)
 
+    # construct element tree from the list of instructions
+    prg_el = generate_element_tree(instructions)
+
+    # print xml representation of the element tree
+    prg_el.print_xml()
+
+
     log(INFO, "parse.py: all ok")
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()

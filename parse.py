@@ -7,13 +7,14 @@
 ##  2024-02-18  ##
 ##              ##
 ##  Edited:     ##
-##  2024-02-11  ##
+##  2024-02-13  ##
 ##################
 import sys
 import os
 from enum import Enum
 from enum import auto as enum_auto
 import pdb
+import re
 
 # filename of this file (without path)
 FILE = os.path.basename(__file__)
@@ -31,10 +32,29 @@ ERROR RETURN CODES:
   23 - other lexical or syntactical error
 """
 
-# error codes
-ERR_WRONG_ARG = 10
+# error codes below
+
+# wrong parameters for parse.py
+ERR_WRONG_PARAMETERS = 10
+
+# missing .ippcode24 header
 ERR_MISSING_HEADER = 21
+
+# invalid or unknown opcode
 ERR_INVALID_OPCODE = 22
+
+# other lexical or syntactical error
+ERR_OTHER_LEXSYN = 23
+
+# dont change these
+NONE = 4
+ERROR = 3
+WARNING = 2
+INFO = 1
+DEBUG = 0
+
+# chosen log level (choose from the above)
+LOG_LEVEL = DEBUG
 
 SIGNATURES = {
     "MOVE": ["var", "symb"],
@@ -75,30 +95,29 @@ SIGNATURES = {
 }
 
 
-# class OpType(Enum):
-#     """operand type"""
-
-#     VAR = enum_auto()
-#     SYMB = enum_auto()
-#     LABEL = enum_auto()
-#     TYPE = enum_auto()
-
-
 class Operand:
     def __init__(self, operand_type: str, value: str) -> None:
         self.type = operand_type
         self.value = value
 
-
-
+    def __repr__(self) -> str:
+        return f"{self.value} ({self.type})"
 
 
 # IPPcode24 instructions
 class Instruction:
-    def __init__(self, opcode: str, *operands) -> None:
-        if opcode.upper() not in SIGNATURES:
-            perr(f"Invalid opcode: '{opcode}'")
-            sys.exit()
+    def __init__(self, opcode: str, operands: list[Operand]) -> None:
+        self.opcode = opcode
+        self.operands = operands
+
+    def __repr__(self) -> str:
+        operands = ""
+        for op in self.operands:
+            operands += str(op) + ", "
+        operands = operands.rstrip(", ")
+
+        return f"{self.opcode} {operands}"
+
 
 class Element:
     """A class for an element (an XML tag)"""
@@ -119,9 +138,14 @@ def perr(*args, **kwargs) -> None:
     print(*args, **kwargs, file=sys.stderr)
 
 
-def perr_usage() -> None:
-    """prints USAGE variable to stderr"""
-    perr(USAGE)
+def log(level: int, *args, **kwargs) -> None:
+    """
+    log to stderr, level is 0 - 3 (DEBUG, INFO, WARNING, ERROR)
+    otherwise, use like print
+    """
+    level_str = ["DEBUG", "INFO", "WARNING", "ERROR"][level]
+    if level >= LOG_LEVEL:
+        perr(f"{level_str}:", *args, **kwargs)
 
 
 def check_args() -> None:
@@ -132,13 +156,13 @@ def check_args() -> None:
 
     if len(sys.argv) > 2:
         perr("Too many arguments...")
-        perr_usage()
-        sys.exit(ERR_WRONG_ARG)
+        perr(USAGE)
+        sys.exit(ERR_WRONG_PARAMETERS)
 
     if len(sys.argv) == 2 and sys.argv[1] != "--help":
         perr(f"invalid argument: '{sys.argv[1]}'")
-        perr_usage()
-        sys.exit(ERR_WRONG_ARG)
+        perr(USAGE)
+        sys.exit(ERR_WRONG_PARAMETERS)
 
     # sys.argv[1] is "--help"
     if len(sys.argv) == 2:
@@ -161,6 +185,7 @@ def load_stdin() -> str:
     return content
 
 
+# todo: remove??
 def parse_input(pgr: str) -> list[Instruction]:
     """parses the program to return a list of instructions"""
     instructions = []
@@ -209,6 +234,54 @@ def header_present(pgr: str) -> bool:
     return ".IPPCODE24" == first_line
 
 
+def process_operand(op: str) -> Operand:
+
+    # label, type
+    if "@" not in op:
+        if op in ["int", "string", "bool"]:
+            return Operand("type", op)
+        else:
+           return Operand("label", op)
+
+
+    # prefix and value/name
+    prefix, *val = op.split("@")
+    val = "@".join(val)
+
+    # var
+    if prefix.upper() in ["GF", "LF", "TF"]:
+        return Operand("var", val)
+
+    # int, bool, string, nil,
+    elif prefix.lower() in ["int", "bool", "string", "nil"]:
+        return Operand(prefix.lower(), val)
+
+
+def process_line(line:str, instructions: list[Instruction]) -> None:
+    """processes line and adds instruction object to `instructions`"""
+    tokens = line.split()
+
+    opcode = tokens.pop(0)
+    log(DEBUG, f"opcode {opcode}")
+
+    if opcode not in SIGNATURES:
+        perr(f"unknown opcode: {opcode}")
+        sys.exit(ERR_INVALID_OPCODE)
+
+    # todo: should this even be here????
+    # i guess yeah
+    # at this point, `tokens` only contains operands
+    if len(tokens) != len(SIGNATURES[opcode]):
+        perr(f"invalid number of operands:")
+        perr(f"    {line}")
+        sys.exit(ERR_OTHER_LEXSYN)
+
+    operands = []
+    for op in tokens:
+        operands.append(process_operand(op))
+
+    instructions.append(Instruction(opcode, operands))
+
 
 def main():
     check_args()
@@ -222,8 +295,14 @@ def main():
         perr("Missing header .IPPcode24")
         sys.exit(ERR_MISSING_HEADER)
 
-    # print(processed)
-    print("parse.py: all ok", file=sys.stderr)
+    instructions = []
+    for line in processed.splitlines()[1:]:
+        process_line(line, instructions)
+
+    for instruction in instructions:
+        log(DEBUG, instruction)
+
+    log(INFO, "parse.py: all ok")
 
 if __name__ == "__main__":
     main()

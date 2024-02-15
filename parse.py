@@ -268,17 +268,26 @@ class Element:
         return f"<{self.type} {attr_str}>"
 
     def closing(self) -> str:
+        """returns element's closing tag"""
         return f"</{self.type}>"
 
     def print_xml(self) -> None:
         """prints XML representation (including children) recursively"""
+
+        # opening tag
         print(self.opening(), end="")
+
+        # element's content
         if len(self.content) > 0:
-            print(self.content, end="")
+            print(xml_safe(self.content), end="")
         else:
             print()
+
+        # child elements
         for child in self.children:
             child.print_xml()
+
+        # closing tag
         print(self.closing())
 
 
@@ -342,6 +351,26 @@ def parse_input(pgr: str) -> list[Instruction]:
     """parses the program to return a list of instructions"""
     instructions = []
 
+
+def xml_safe(unsafe: str) -> str:
+    """returns xml safe version of the string"""
+
+    escape_table = {
+        '"': "&quot;",
+        "'": "&apos;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "&": "&amp;"
+    }
+
+    output = ""
+    for letter in unsafe:
+        if letter in escape_table:
+            output += escape_table[letter]
+        else:
+            output += letter
+
+    return output
 
 
 def preprocess(pgr: str) -> str:

@@ -75,7 +75,7 @@ SIGNATURES = {
     "EQ": ["var", "symb", "symb"],
     "AND": ["var", "symb", "symb"],
     "OR": ["var", "symb", "symb"],
-    "NOT": ["var", "symb", "symb"],
+    "NOT": ["var", "symb"],
     "INT2CHAR": ["var", "symb"],
     "STR2INT": ["var", "symb", "symb"],
     "READ": ["var", "type"],
@@ -474,7 +474,7 @@ def process_line(line:str, instructions: list[Instruction]) -> None:
     # at this point, `tokens` only contains operands
     if len(tokens) != len(SIGNATURES[opcode]):
         perr(f"invalid number of operands:")
-        perr(f"    {line}")
+        perr(f"    \"{line}\"")
         sys.exit(ERR_OTHER_LEXSYN)
 
     operands: list[Operand] = []

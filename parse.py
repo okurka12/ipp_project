@@ -7,7 +7,7 @@
 ##  2024-02-18  ##
 ##              ##
 ##  Edited:     ##
-##  2024-02-13  ##
+##  2024-02-15  ##
 ##################
 import sys
 import os
@@ -346,12 +346,6 @@ def load_stdin() -> str:
     return content
 
 
-# todo: remove??
-def parse_input(pgr: str) -> list[Instruction]:
-    """parses the program to return a list of instructions"""
-    instructions = []
-
-
 def xml_safe(unsafe: str) -> str:
     """returns xml safe version of the string"""
 
@@ -437,55 +431,6 @@ def is_valid_integer(s: str) -> bool:
         p = re.fullmatch(r"\+?[0-9]+", s) is not None
         m = re.fullmatch(r"\-?[0-9]+", s) is not None
         return p or m
-
-
-# todo: delete whole??
-# def process_operand(op: str, exp: str) -> Operand:
-    """
-    Processes operand string `op` according to the expected operand type `exp`
-    (var, symb, type, label) and returns Operand object
-    """
-
-
-
-
-    # old, todo: delete?
-    # # label, type
-    # if "@" not in op:
-    #     if op in ["int", "string", "bool"]:
-    #         return Operand("type", op)
-    #     else:
-    #        return Operand("label", op)
-
-
-    # # prefix and value/name
-    # prefix, *val = op.split("@")
-    # val = "@".join(val)
-
-    # # var
-    # if prefix in ["GF", "LF", "TF"]:
-    #     return Operand("var", f"{prefix.upper()}@{val}")
-
-    # # int, bool, string, nil,
-    # elif prefix in ["int", "bool", "string", "nil"]:
-    #     return Operand(prefix.lower(), val)
-
-    # else:
-    #     perr(f"invalid operand: {op}")
-    #     sys.exit(ERR_OTHER_LEXSYN)
-
-
-# todo: delete?
-# def do_match(expected: str, op: Operand) -> bool:
-#     """
-#     returns if `op` matches the expected type
-#     `expected` (var, symb, label, type)
-#     """
-#     assert expected in ["var", "symb", "label", "type"]
-#     return (expected == "var" and op.is_var()) or \
-#            (expected == "symb" and op.is_symb()) or \
-#            (expected == "label" and (op.is_label() or op.is_type())) or \
-#            (expected == "type" and op.is_type())
 
 
 def process_line(line:str, instructions: list[Instruction]) -> None:

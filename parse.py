@@ -11,9 +11,6 @@
 ##################
 import sys
 import os
-from enum import Enum
-from enum import auto as enum_auto
-import pdb
 import re
 
 # filename of this file (without path)

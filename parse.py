@@ -94,21 +94,115 @@ SIGNATURES = {
     "BREAK": []
 }
 
+TYPES = ["int", "bool", "string", "nil"]
+
 
 class Operand:
-    def __init__(self, operand_type: str, value: str) -> None:
+    """
+    class for an operand for a instruction
+
+
+    instance attributes:
+
+    `.type` - operand type (label, type, var, int, bool, string, nil)
+
+    `.value` - value
+    """
+    def __init__(self, op: str, exp: str) -> None:
         """
-        `operand_type` - int, bool, string, nil, label, type, var
-        `value` - text, literal, frame@identifier
+        Instantiate Operand object from the token string `op` and expected
+        operand type `exp` (var, symb, label, type)
         """
-        self.type = operand_type
-        self.value = value
+        self.type = ""
+        self.value = ""
+        log(DEBUG, f"instatiating Operand '{op}' ({exp})")
+
+        match exp:
+            case "label":
+                if not is_valid_identifier(op):
+                    perr(f"invalid label: '{op}'")
+                    sys.exit(ERR_OTHER_LEXSYN)
+                self.type = "label"
+                self.value = op
+            case "var":
+                self.instantiate_var(op)
+            case "symb":
+                self.instantiate_symb(op)
+            case "type":
+                self.instantiate_type(op)
+
+    def instantiate_var(self, op: str) -> None:
+
+        if "@" not in op or len(op.split("@")) != 2:
+            perr(f"invalid variable operand: '{op}'")
+            sys.exit(ERR_OTHER_LEXSYN)
+
+        frame, id = op.split("@")
+
+        if frame not in ["GF", "LF", "TF"]:
+            perr(f"invalid variable frame: '{frame}'")
+            sys.exit(ERR_OTHER_LEXSYN)
+
+        if not is_valid_identifier(id):
+            perr(f"invalid variable identifier: '{id}'")
+            sys.exit(ERR_OTHER_LEXSYN)
+
+        self.type = "var"
+        self.value = op
+
+    def instantiate_symb(self, op: str) -> None:
+
+        if "@" not in op:
+            perr(f"invalid variable/constant operand: '{op}'")
+            sys.exit(ERR_OTHER_LEXSYN)
+
+        prefix, *value = op.split("@")
+        value = "".join(value)
+
+        # case: `op` is a variable
+        if prefix in ["GF", "LF", "TF"]:
+            self.instantiate_var(op)
+            return
+
+        if prefix not in TYPES:
+            perr(f"invalid data type: '{prefix}'")
+            sys.exit(ERR_OTHER_LEXSYN)
+
+        value_error_flag = False
+        match prefix:
+            case "int":
+                value_error_flag = not is_valid_integer(value)
+                self.type = "int"
+                self.value = value
+            case "bool":
+                value_error_flag = value not in ["true", "false"]
+                self.type = "bool"
+                self.value = value
+            case "string":
+                self.type = "string"
+                self.value = value
+            case "nil":
+                value_error_flag = value != "nil"
+                self.type = "nil"
+                self.value = value
+
+        if value_error_flag:
+            perr(f"invalid value '{value}' for type {prefix}")
+            sys.exit(ERR_OTHER_LEXSYN)
+
+    def instantiate_type(self, op: str) -> None:
+        if op not in TYPES:
+            perr(f"invalid type: '{op}")
+            sys.exit(ERR_OTHER_LEXSYN)
+        self.type = "type"
+        self.value = op
+
 
     def __repr__(self) -> str:
         return f"{self.value} ({self.type})"
 
     def is_constant(self) -> bool:
-        return self.type in ["int", "bool", "string", "nil"]
+        return self.type in TYPES
 
     def is_symb(self) -> bool:
         """symb - constant or a variable"""
@@ -290,57 +384,92 @@ def header_present(pgr: str) -> bool:
     return ".IPPCODE24" == first_line
 
 
-def process_operand(op: str) -> Operand:
-
-    # label, type
-    if "@" not in op:
-        if op in ["int", "string", "bool"]:
-            return Operand("type", op)
-        else:
-           return Operand("label", op)
+def is_valid_identifier(id: str) -> bool:
+    return re.match(r"[a-zA-Z_\-$&%*!?][a-zA-Z0-9_\-$&%*!?]*", id) is not None
 
 
-    # prefix and value/name
-    prefix, *val = op.split("@")
-    val = "@".join(val)
+def is_valid_integer(s: str) -> bool:
 
-    # var
-    if prefix in ["GF", "LF", "TF"]:
-        return Operand("var", f"{prefix.upper()}@{val}")
+    # should not happen
+    if len(s) < 1:
+        return False
 
-    # int, bool, string, nil,
-    elif prefix in ["int", "bool", "string", "nil"]:
-        return Operand(prefix.lower(), val)
-
+    if "0x" in s:
+        p = re.fullmatch(r"\+?0[xX][0-9a-fA-F]+", s) is not None
+        m = re.fullmatch(r"\-?0[xX][0-9a-fA-F]+", s) is not None
+        return p or m
+    elif "0o" in s:
+        p = re.fullmatch(r"\+?0[oO][0-7]+", s) is not None
+        m = re.fullmatch(r"\-?0[oO][0-7]+", s) is not None
+        return p or m
     else:
-        perr(f"invalid operand: {op}")
-        sys.exit(ERR_OTHER_LEXSYN)
+        p = re.fullmatch(r"\+?[0-9]+", s) is not None
+        m = re.fullmatch(r"\-?[0-9]+", s) is not None
+        return p or m
 
 
-def do_match(expected: str, op: Operand) -> bool:
+# todo: delete whole??
+# def process_operand(op: str, exp: str) -> Operand:
     """
-    returns if `op` matches the expected type
-    `expected` (var, symb, label, type)
+    Processes operand string `op` according to the expected operand type `exp`
+    (var, symb, type, label) and returns Operand object
     """
-    assert expected in ["var", "symb", "label", "type"]
-    return (expected == "var" and op.is_var()) or \
-           (expected == "symb" and op.is_symb()) or \
-           (expected == "label" and op.is_label()) or \
-           (expected == "type" and op.is_type())
+
+
+
+
+    # old, todo: delete?
+    # # label, type
+    # if "@" not in op:
+    #     if op in ["int", "string", "bool"]:
+    #         return Operand("type", op)
+    #     else:
+    #        return Operand("label", op)
+
+
+    # # prefix and value/name
+    # prefix, *val = op.split("@")
+    # val = "@".join(val)
+
+    # # var
+    # if prefix in ["GF", "LF", "TF"]:
+    #     return Operand("var", f"{prefix.upper()}@{val}")
+
+    # # int, bool, string, nil,
+    # elif prefix in ["int", "bool", "string", "nil"]:
+    #     return Operand(prefix.lower(), val)
+
+    # else:
+    #     perr(f"invalid operand: {op}")
+    #     sys.exit(ERR_OTHER_LEXSYN)
+
+
+# todo: delete?
+# def do_match(expected: str, op: Operand) -> bool:
+#     """
+#     returns if `op` matches the expected type
+#     `expected` (var, symb, label, type)
+#     """
+#     assert expected in ["var", "symb", "label", "type"]
+#     return (expected == "var" and op.is_var()) or \
+#            (expected == "symb" and op.is_symb()) or \
+#            (expected == "label" and (op.is_label() or op.is_type())) or \
+#            (expected == "type" and op.is_type())
 
 
 def process_line(line:str, instructions: list[Instruction]) -> None:
     """processes line and adds instruction object to `instructions`"""
+    log(DEBUG, f"processing line: {line}")
     tokens = line.split()
 
     opcode = tokens.pop(0).upper()
-    log(DEBUG, f"opcode {opcode}")
+    log(DEBUG, f"  opcode: {opcode}")
 
     if opcode not in SIGNATURES:
         perr(f"unknown opcode: {opcode}")
         sys.exit(ERR_INVALID_OPCODE)
 
-    # todo: should this even be here????
+    # should this even be here???? *thinking*
     # i guess yeah
     # at this point, `tokens` only contains operands
     if len(tokens) != len(SIGNATURES[opcode]):
@@ -350,16 +479,8 @@ def process_line(line:str, instructions: list[Instruction]) -> None:
 
     operands: list[Operand] = []
     for i, op_str in enumerate(tokens):
-        op_obj = process_operand(op_str)
-
-        # todo: check if this check is appropriate
-        expected_type = SIGNATURES[opcode][i]
-        if not do_match(expected_type, op_obj):
-            perr(f"invalit argument: {op_str}")
-            perr(f"    {line}")
-            sys.exit(ERR_OTHER_LEXSYN)
-
-        operands.append(op_obj)
+        log(DEBUG, f"  operand {i + 1}: {op_str}")
+        operands.append(Operand(op_str, SIGNATURES[opcode][i]))
 
     instructions.append(Instruction(opcode, operands))
 
@@ -407,7 +528,7 @@ def main():
 
     # log processed instructions for debugging purposes
     for instruction in instructions:
-        log(DEBUG, instruction)
+        log(DEBUG, f"processed instruction: {instruction}")
 
     # construct element tree from the list of instructions
     prg_el = generate_element_tree(instructions)

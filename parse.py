@@ -157,7 +157,7 @@ class Operand:
             sys.exit(ERR_OTHER_LEXSYN)
 
         prefix, *value = op.split("@")
-        value = "".join(value)
+        value = "@".join(value)
 
         # case: `op` is a variable
         if prefix in ["GF", "LF", "TF"]:
@@ -272,11 +272,13 @@ class Element:
 
     def print_xml(self) -> None:
         """prints XML representation (including children) recursively"""
-        print(self.opening())
+        print(self.opening(), end="")
+        if len(self.content) > 0:
+            print(self.content, end="")
+        else:
+            print()
         for child in self.children:
             child.print_xml()
-        if len(self.content) > 0:
-            print(self.content)
         print(self.closing())
 
 

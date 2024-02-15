@@ -1,0 +1,24 @@
+# ecpected: OK (0)
+.ippcode24
+write int@5
+write int@05
+write int@-5
+write int@-05
+write int@0x5
+write int@+0x5
+write int@-0x5
+write int@+0x05
+write int@-0x05
+write int@0o5
+write int@+0o5
+write int@-0o5
+write int@+0o05
+write int@-0o05
+write int@005
+write int@+005
+write int@-005
+write int@-5
+write int@+5
+
+# binary literals are not allowed
+# write int@0b1

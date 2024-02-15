@@ -45,5 +45,8 @@ test_file test_03.txt $OK
 test_file test_04.txt $ERR_INVALID_INSTRUCTION
 test_file test_05.txt $ERR_OTHER_LEX_SYN
 test_file test_06.txt $ERR_OTHER_LEX_SYN
+test_file test_07.txt $OK
+test_file test_08.txt $ERR_OTHER_LEX_SYN
+test_file test_09.txt $OK
 
 echo "all tests done (passed $PASSED_TESTS/$TEST_COUNT)"

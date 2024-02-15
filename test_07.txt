@@ -1,0 +1,4 @@
+# expected: OK (return code 0)
+.ippcode24
+label int
+jump int

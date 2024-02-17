@@ -432,7 +432,6 @@ def header_present(pgr: str) -> bool:
     return ".IPPCODE24" == first_line
 
 
-# todo: use this fn
 def is_valid_string(s: str) -> bool:
     pattern = r"\\\d\d\d"
     backslash_count = s.count("\\")

@@ -1,4 +1,6 @@
-# expected: invalid opcode (22)
+# expected: lexical error (23)
+# NOT expected: invalid opcode (22)
 .IPPcode24
 .IPPcode24
 DEFVAR GF@a
+    

@@ -1,0 +1,5 @@
+# expected: invalid opcode (22)
+.iPpCoDe24
+
+DEFVAR GF@a
+ASSIGN GF@a int@5

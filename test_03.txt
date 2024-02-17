@@ -1,3 +1,4 @@
+# expected: OK (return code 0)
 
 # comment
 

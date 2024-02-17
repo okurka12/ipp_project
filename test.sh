@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ERR_MISSING_HEADER=21
-ERR_INVALID_INSTRUCTION=22
+ERR_INVALID_OPCODE=22
 ERR_OTHER_LEX_SYN=23
 OK=0
 
@@ -42,11 +42,12 @@ test_file example.txt $OK
 test_file test_01.txt $OK
 test_file test_02.txt $OK
 test_file test_03.txt $OK
-test_file test_04.txt $ERR_INVALID_INSTRUCTION
+test_file test_04.txt $ERR_OTHER_LEX_SYN # $ERR_INVALID_OPCODE
 test_file test_05.txt $ERR_OTHER_LEX_SYN
 test_file test_06.txt $ERR_OTHER_LEX_SYN
 test_file test_07.txt $OK
 test_file test_08.txt $ERR_OTHER_LEX_SYN
 test_file test_09.txt $OK
+test_file test_10.txt $ERR_INVALID_OPCODE
 
 echo "all tests done (passed $PASSED_TESTS/$TEST_COUNT)"

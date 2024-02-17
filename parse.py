@@ -31,7 +31,7 @@ ERROR RETURN CODES:
 
 XML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 
-# error codes below
+# error codes below (important: all are prefixed with 'ERR')
 
 # wrong parameters for parse.py
 ERR_WRONG_PARAMETERS = 10
@@ -120,7 +120,7 @@ class Operand:
             case "label":
                 if not is_valid_identifier(op):
                     perr(f"invalid label: '{op}'")
-                    sys.exit(ERR_OTHER_LEXSYN)
+                    my_exit(ERR_OTHER_LEXSYN)
                 self.type = "label"
                 self.value = op
             case "var":
@@ -130,7 +130,7 @@ class Operand:
             case "type":
                 if op not in TYPES:
                     perr(f"invalid type: '{op}")
-                    sys.exit(ERR_OTHER_LEXSYN)
+                    my_exit(ERR_OTHER_LEXSYN)
                 self.type = "type"
                 self.value = op
 
@@ -139,17 +139,17 @@ class Operand:
 
         if "@" not in op or len(op.split("@")) != 2:
             perr(f"invalid variable operand: '{op}'")
-            sys.exit(ERR_OTHER_LEXSYN)
+            my_exit(ERR_OTHER_LEXSYN)
 
         frame, id = op.split("@")
 
         if frame not in ["GF", "LF", "TF"]:
             perr(f"invalid variable frame: '{frame}'")
-            sys.exit(ERR_OTHER_LEXSYN)
+            my_exit(ERR_OTHER_LEXSYN)
 
         if not is_valid_identifier(id):
             perr(f"invalid variable identifier: '{id}'")
-            sys.exit(ERR_OTHER_LEXSYN)
+            my_exit(ERR_OTHER_LEXSYN)
 
         self.type = "var"
         self.value = op
@@ -159,7 +159,7 @@ class Operand:
 
         if "@" not in op:
             perr(f"invalid variable/constant operand: '{op}'")
-            sys.exit(ERR_OTHER_LEXSYN)
+            my_exit(ERR_OTHER_LEXSYN)
 
         prefix, *value = op.split("@")
         value = "@".join(value)
@@ -171,7 +171,7 @@ class Operand:
 
         if prefix not in TYPES:
             perr(f"invalid data type: '{prefix}'")
-            sys.exit(ERR_OTHER_LEXSYN)
+            my_exit(ERR_OTHER_LEXSYN)
 
         value_error_flag = False
         match prefix:
@@ -184,6 +184,9 @@ class Operand:
                 self.type = "bool"
                 self.value = value
             case "string":
+                if not is_valid_string(value):
+                    perr(f"invalid string: \"{value}\"")
+                    my_exit(ERR_OTHER_LEXSYN)
                 self.type = "string"
                 self.value = value
             case "nil":
@@ -193,7 +196,7 @@ class Operand:
 
         if value_error_flag:
             perr(f"invalid value '{value}' for type {prefix}")
-            sys.exit(ERR_OTHER_LEXSYN)
+            my_exit(ERR_OTHER_LEXSYN)
 
 
     def __repr__(self) -> str:
@@ -338,18 +341,18 @@ def check_args() -> None:
     if len(sys.argv) > 2:
         perr("Too many arguments...")
         perr(USAGE)
-        sys.exit(ERR_WRONG_PARAMETERS)
+        my_exit(ERR_WRONG_PARAMETERS)
 
     if len(sys.argv) == 2 and sys.argv[1] != "--help":
         perr(f"invalid argument: '{sys.argv[1]}'")
         perr(USAGE)
-        sys.exit(ERR_WRONG_PARAMETERS)
+        my_exit(ERR_WRONG_PARAMETERS)
 
     # sys.argv[1] is "--help"
     if len(sys.argv) == 2:
         print(USAGE)
         print(HELP)
-        sys.exit(0)
+        my_exit(0)
 
 
 def load_stdin() -> str:
@@ -421,12 +424,20 @@ def header_present(pgr: str) -> bool:
     """returns if .IPPcode24 is present in the first line"""
 
     if len(pgr.splitlines()) == 0:
-        sys.exit(ERR_MISSING_HEADER)
+        my_exit(ERR_MISSING_HEADER)
 
     first_line = pgr.splitlines()[0]
     first_line = first_line.strip()
     first_line = first_line.upper()
     return ".IPPCODE24" == first_line
+
+
+# todo: use this fn
+def is_valid_string(s: str) -> bool:
+    pattern = r"\\\d\d\d"
+    backslash_count = s.count("\\")
+    pattern_match_count = len(re.findall(pattern, s))
+    return backslash_count == pattern_match_count
 
 
 def is_valid_identifier(id: str) -> bool:
@@ -464,7 +475,7 @@ def process_line(line:str, instructions: list[Instruction]) -> None:
 
     if opcode not in SIGNATURES:
         perr(f"unknown opcode: {opcode}")
-        sys.exit(ERR_INVALID_OPCODE)
+        my_exit(ERR_INVALID_OPCODE)
 
     # should this even be here???? *thinking*
     # i guess yeah
@@ -472,7 +483,7 @@ def process_line(line:str, instructions: list[Instruction]) -> None:
     if len(tokens) != len(SIGNATURES[opcode]):
         perr(f"invalid number of operands:")
         perr(f"    \"{line}\"")
-        sys.exit(ERR_OTHER_LEXSYN)
+        my_exit(ERR_OTHER_LEXSYN)
 
     operands: list[Operand] = []
     for i, op_str in enumerate(tokens):
@@ -513,6 +524,20 @@ def generate_element_tree(instructions: list[Instruction]) -> Element:
     return prg_el
 
 
+def my_exit(return_code: int) -> None:
+    """cals `sys.exit` but also logs"""
+
+    # find the name in the return codes
+    rc_name = ""
+    for key, value in globals().items():
+        if "ERR" in key and value == return_code:
+            rc_name = key
+            break
+
+    log(ERROR, f"exiting with code {return_code} ({rc_name})")
+    sys.exit(return_code)
+
+
 def main():
     check_args()
 
@@ -525,7 +550,7 @@ def main():
     # check for header (.IPPcode24)
     if not header_present(processed):
         perr("Missing header .IPPcode24")
-        sys.exit(ERR_MISSING_HEADER)
+        my_exit(ERR_MISSING_HEADER)
 
     # parse code line by line to get a list of instruction objects
     instructions = []

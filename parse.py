@@ -444,6 +444,13 @@ def is_valid_identifier(id: str) -> bool:
     return re.match(r"[a-zA-Z_\-$&%*!?][a-zA-Z0-9_\-$&%*!?]*", id) is not None
 
 
+# i actually don't think this check is necessary but it has come to my
+# attention that when there are two '.ippcode24' headers we _should_ return
+# 23 instead of 22
+def is_valid_opcode(op: str) -> bool:
+    return op.isalnum()
+
+
 def is_valid_integer(s: str) -> bool:
 
     # should not happen
@@ -472,6 +479,10 @@ def process_line(line:str, instructions: list[Instruction]) -> None:
 
     opcode = tokens.pop(0).upper()
     log(DEBUG, f"  opcode: {opcode}")
+
+    if not is_valid_opcode(opcode):
+        perr(f"invalid opcode: {opcode}")
+        my_exit(ERR_OTHER_LEXSYN)
 
     if opcode not in SIGNATURES:
         perr(f"unknown opcode: {opcode}")

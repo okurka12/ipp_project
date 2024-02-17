@@ -9,8 +9,8 @@
 ##  Edited:     ##
 ##  2024-02-15  ##
 ##################
-import sys
-import os
+import sys  # sys.exit, sys.argv, sys.stderr
+import os   # os.path.basename
 import re
 
 # filename of this file (without path)

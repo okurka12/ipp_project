@@ -29,6 +29,8 @@ ERROR RETURN CODES:
   23 - other lexical or syntactical error
 """
 
+XML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+
 # error codes below
 
 # wrong parameters for parse.py
@@ -126,9 +128,14 @@ class Operand:
             case "symb":
                 self.instantiate_symb(op)
             case "type":
-                self.instantiate_type(op)
+                if op not in TYPES:
+                    perr(f"invalid type: '{op}")
+                    sys.exit(ERR_OTHER_LEXSYN)
+                self.type = "type"
+                self.value = op
 
     def instantiate_var(self, op: str) -> None:
+        """to be used only by `__init__`"""
 
         if "@" not in op or len(op.split("@")) != 2:
             perr(f"invalid variable operand: '{op}'")
@@ -148,6 +155,7 @@ class Operand:
         self.value = op
 
     def instantiate_symb(self, op: str) -> None:
+        """to be used only by `__init__`"""
 
         if "@" not in op:
             perr(f"invalid variable/constant operand: '{op}'")
@@ -187,13 +195,6 @@ class Operand:
             perr(f"invalid value '{value}' for type {prefix}")
             sys.exit(ERR_OTHER_LEXSYN)
 
-    def instantiate_type(self, op: str) -> None:
-        if op not in TYPES:
-            perr(f"invalid type: '{op}")
-            sys.exit(ERR_OTHER_LEXSYN)
-        self.type = "type"
-        self.value = op
-
 
     def __repr__(self) -> str:
         return f"{self.value} ({self.type})"
@@ -217,11 +218,21 @@ class Operand:
 
 # IPPcode24 instructions
 class Instruction:
+    """
+    class for instruction objects
+
+    instance attributes:
+
+    `.opcode` - opcode string
+
+    `.operands` - list of operands (objects of class `Operand`)
+    """
     def __init__(self, opcode: str, operands: list[Operand]) -> None:
         self.opcode = opcode
         self.operands = operands
 
     def __repr__(self) -> str:
+        """only for debugging"""
         operands = ""
         for op in self.operands:
             operands += str(op) + ", "
@@ -237,7 +248,19 @@ class Instruction:
 
 
 class Element:
-    """A class for an element (an XML tag)"""
+    """
+    A class for an element (an XML tag)
+
+    instance attributes:
+
+    `.type` - element name (tag)
+
+    `.attr` - tag attributes (dictionary)
+
+    `.children` - list of children elements (objects of class Element)
+
+    `.content` - inner content of the element
+    """
 
     def __init__(self, type: str) -> None:
         self.type = type
@@ -432,6 +455,7 @@ def is_valid_integer(s: str) -> bool:
 
 def process_line(line:str, instructions: list[Instruction]) -> None:
     """processes line and adds instruction object to `instructions`"""
+
     log(DEBUG, f"processing line: {line}")
     tokens = line.split()
 
@@ -459,8 +483,16 @@ def process_line(line:str, instructions: list[Instruction]) -> None:
 
 
 def generate_element_tree(instructions: list[Instruction]) -> Element:
+    """
+    generates element tree (objects of class `Element`) from a list
+    of instructions
+    """
+
+    # root
     prg_el = Element("program")
     prg_el.add_attribute("language", "IPPcode24")
+
+    # go through instructions
     for i, inst in enumerate(instructions):
 
         # instruction element
@@ -468,6 +500,7 @@ def generate_element_tree(instructions: list[Instruction]) -> Element:
         inst_el.add_attribute("order", str(i + 1))
         inst_el.add_attribute("opcode", inst.opcode.upper())
 
+        # argument elements
         for j, op in enumerate(inst.op_iter()):
             op_el = Element(f"arg{j + 1}")
             op_el.add_attribute("type", op.type)
@@ -499,15 +532,13 @@ def main():
     for line in processed.splitlines()[1:]:
         process_line(line, instructions)
 
-    # log processed instructions for debugging purposes
     for instruction in instructions:
         log(DEBUG, f"processed instruction: {instruction}")
 
-    # construct element tree from the list of instructions
+    # get xml tree
     prg_el = generate_element_tree(instructions)
 
-    # print xml header
-    print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+    print(XML_HEADER)
 
     # print xml representation of the element tree
     prg_el.print_xml()

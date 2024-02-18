@@ -7,7 +7,7 @@
 ##  2024-02-18  ##
 ##              ##
 ##  Edited:     ##
-##  2024-02-17  ##
+##  2024-02-18  ##
 ##################
 import sys  # sys.exit, sys.argv, sys.stderr
 import os   # os.path.basename
@@ -53,7 +53,7 @@ INFO = 1
 DEBUG = 0
 
 # chosen log level (choose from the above)
-LOG_LEVEL = DEBUG
+LOG_LEVEL = NONE
 
 SIGNATURES = {
     "MOVE": ["var", "symb"],

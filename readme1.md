@@ -69,4 +69,4 @@ očekávaný typ neplatný formát, konstrukce selže a program je násilně uko
 
 ---
 
-Vít Pavlík (`xpavli0a`), 18. 2. 2024
+Vít Pavlík (`xpavli0a`), 5. 3. 2024

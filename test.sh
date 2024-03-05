@@ -49,5 +49,7 @@ test_file test_07.txt $OK
 test_file test_08.txt $ERR_OTHER_LEX_SYN
 test_file test_09.txt $OK
 test_file test_10.txt $ERR_INVALID_OPCODE
+test_file test_11.txt $ERR_OTHER_LEX_SYN
+test_file test_12.txt $ERR_OTHER_LEX_SYN
 
 echo "all tests done (passed $PASSED_TESTS/$TEST_COUNT)"

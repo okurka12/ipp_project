@@ -7,7 +7,7 @@
 ##  2024-02-18  ##
 ##              ##
 ##  Edited:     ##
-##  2024-02-18  ##
+##  2024-03-05  ##
 ##################
 import sys  # sys.exit, sys.argv, sys.stderr
 import os   # os.path.basename
@@ -53,7 +53,7 @@ INFO = 1
 DEBUG = 0
 
 # chosen log level (choose from the above)
-LOG_LEVEL = NONE
+LOG_LEVEL = DEBUG
 
 SIGNATURES = {
     "MOVE": ["var", "symb"],
@@ -76,7 +76,7 @@ SIGNATURES = {
     "OR": ["var", "symb", "symb"],
     "NOT": ["var", "symb"],
     "INT2CHAR": ["var", "symb"],
-    "STR2INT": ["var", "symb", "symb"],
+    "STRI2INT": ["var", "symb", "symb"],
     "READ": ["var", "type"],
     "WRITE": ["symb"],
     "CONCAT": ["var", "symb", "symb"],
@@ -121,6 +121,7 @@ class Operand:
                 if not is_valid_identifier(op):
                     perr(f"invalid label: '{op}'")
                     my_exit(ERR_OTHER_LEXSYN)
+                log(DEBUG, f"'{op}' is a valid label")
                 self.type = "label"
                 self.value = op
             case "var":
@@ -440,7 +441,8 @@ def is_valid_string(s: str) -> bool:
 
 
 def is_valid_identifier(id: str) -> bool:
-    return re.match(r"[a-zA-Z_\-$&%*!?][a-zA-Z0-9_\-$&%*!?]*", id) is not None
+    pattern = r"[a-zA-Z_\-$&%*!?][a-zA-Z0-9_\-$&%*!?]*"
+    return re.fullmatch(pattern, id) is not None
 
 
 # i actually don't think this check is necessary but it has come to my

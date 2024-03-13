@@ -7,7 +7,7 @@
 ##  2024-02-18  ##
 ##              ##
 ##  Edited:     ##
-##  2024-03-05  ##
+##  2024-03-06  ##
 ##################
 import sys  # sys.exit, sys.argv, sys.stderr
 import os   # os.path.basename
@@ -29,6 +29,7 @@ ERROR RETURN CODES:
   23 - other lexical or syntactical error
 """
 
+# mandatory xml header
 XML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 
 # error codes below (important: all are prefixed with 'ERR')
@@ -53,8 +54,9 @@ INFO = 1
 DEBUG = 0
 
 # chosen log level (choose from the above)
-LOG_LEVEL = DEBUG
+LOG_LEVEL = NONE
 
+# expected argument types for all the instructions
 SIGNATURES = {
     "MOVE": ["var", "symb"],
     "CREATEFRAME": [],
@@ -93,6 +95,7 @@ SIGNATURES = {
     "BREAK": []
 }
 
+# data types
 TYPES = ["int", "bool", "string", "nil"]
 
 
@@ -537,9 +540,9 @@ def generate_element_tree(instructions: list[Instruction]) -> Element:
 
 
 def my_exit(return_code: int) -> None:
-    """cals `sys.exit` but also logs"""
+    """calls `sys.exit` but also logs"""
 
-    # find the name in the return codes
+    # find the name in the return code constants
     rc_name = ""
     for key, value in globals().items():
         if "ERR" in key and value == return_code:

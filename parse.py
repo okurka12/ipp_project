@@ -580,6 +580,11 @@ def main():
 
     print(XML_HEADER)
 
+    # print the input program as a xml comment
+    print("<!-- Original source code:")
+    print(pgr_in.replace("-->", "- - >"))
+    print("-->")
+
     # print xml representation of the element tree
     prg_el.print_xml()
 
